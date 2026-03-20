@@ -1,3 +1,15 @@
+# Kong declarative config — Supabase self-hosted (Dokploy) con /mcp HABILITADO
+#
+# Uso: sustituir el kong.yml del volumen del stack por este archivo (o fusionar solo el bloque `mcp`).
+# Las variables $SUPABASE_ANON_KEY, $SUPABASE_SERVICE_KEY, $DASHBOARD_* las sustituye tu entrypoint
+# (eval echo) como en el docker oficial de Supabase.
+#
+# IPs en ip-restriction (ruta /mcp):
+#   - 127.0.0.1, ::1 — acceso local en el host y túnel SSH típico
+#   - 172.17.0.1 — a veces Kong ve esta IP cuando el forward llega vía docker-proxy (probar si sin ella falla)
+#
+# Seguridad: /mcp expone capacidades de Studio; no abras /mcp a 0.0.0.0. Mantén Traefik/firewall como ahora.
+
 _format_version: '2.1'
 _transform: true
 
@@ -240,7 +252,7 @@ services:
           allow:
             - admin
 
-  ## Block access to /api/mcp
+  ## Block access to /api/mcp (sigue bloqueado en la ruta pública alternativa)
   - name: mcp-blocker
     _comment: 'Block direct access to /api/mcp'
     url: http://studio:3000/api/mcp
@@ -255,7 +267,7 @@ services:
           status_code: 403
           message: "Access is forbidden."
 
-  ## MCP endpoint - local access
+  ## MCP endpoint — HABILITADO: solo IPs locales / docker bridge (túnel SSH)
   - name: mcp
     _comment: 'MCP: /mcp -> http://studio:3000/api/mcp (local access)'
     url: http://studio:3000/api/mcp
@@ -265,22 +277,14 @@ services:
         paths:
           - /mcp
     plugins:
-      # Block access to /mcp by default
-      - name: request-termination
+      - name: cors
+      - name: ip-restriction
         config:
-          status_code: 403
-          message: "Access is forbidden."
-      # Enable local access (danger zone!)
-      # 1. Comment out the 'request-termination' section above
-      # 2. Uncomment the entire section below, including 'deny'
-      # 3. Add your local IPs to the 'allow' list
-      #- name: cors
-      #- name: ip-restriction
-      #  config:
-      #    allow:
-      #      - 127.0.0.1
-      #      - ::1
-      #    deny: []
+          allow:
+            - 127.0.0.1
+            - ::1
+            - 172.17.0.1
+          deny: []
 
   ## Protected Dashboard - catch all remaining routes
   - name: dashboard
