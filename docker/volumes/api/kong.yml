@@ -5,7 +5,7 @@
 # (eval echo) como en el docker oficial de Supabase.
 #
 # IPs en ip-restriction (ruta /mcp):
-#   - 127.0.0.1, ::1 — acceso local en el host y túnel SSH típico
+#   - 127.21.0.1, ::1 — acceso local en el host y túnel SSH típico
 #   - 172.17.0.1 — a veces Kong ve esta IP cuando el forward llega vía docker-proxy (probar si sin ella falla)
 #
 # Seguridad: /mcp expone capacidades de Studio; no abras /mcp a 0.0.0.0. Mantén Traefik/firewall como ahora.
@@ -283,7 +283,7 @@ services:
           allow:
             - 127.0.0.1
             - ::1
-            - 172.17.0.1
+            - 172.21.0.1
           deny: []
 
   ## Protected Dashboard - catch all remaining routes
